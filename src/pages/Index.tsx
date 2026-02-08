@@ -1,13 +1,13 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { FilePreview } from "@/components/FilePreview";
 import { ProcessingStatus, ProcessingStep } from "@/components/ProcessingStatus";
-import { TextPreview } from "@/components/TextPreview";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { LiveTextDisplay } from "@/components/LiveTextDisplay";
+import { SyncedReadingView } from "@/components/SyncedReadingView";
 import { VoiceSelector, VoiceOption, LanguageOption, voices, languages } from "@/components/VoiceSelector";
 import { Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -125,7 +125,10 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
-        <div className="max-w-2xl mx-auto space-y-8">
+        <div className={cn(
+          "mx-auto space-y-8 transition-all duration-300",
+          processingStep === "complete" ? "max-w-5xl" : "max-w-2xl"
+        )}>
           {/* Hero */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-display font-bold text-foreground mb-4">
@@ -144,8 +147,8 @@ const Index = () => {
             onClear={handleClear}
           />
 
-          {/* File Preview */}
-          {selectedFile && (
+          {/* File Preview - only show before conversion completes */}
+          {selectedFile && processingStep !== "complete" && (
             <FilePreview file={selectedFile} />
           )}
 
@@ -175,9 +178,6 @@ const Index = () => {
           {/* Processing Status */}
           <ProcessingStatus step={processingStep} error={error} />
 
-          {/* Text Preview */}
-          {extractedText && <TextPreview text={extractedText} />}
-
           {/* Audio Player */}
           {audioUrl && processingStep === "complete" && (
             <AudioPlayer
@@ -187,9 +187,10 @@ const Index = () => {
             />
           )}
 
-          {/* Live Text Display */}
-          {audioUrl && processingStep === "complete" && audioRef && (
-            <LiveTextDisplay
+          {/* Side-by-side Reading View */}
+          {audioUrl && processingStep === "complete" && selectedFile && (
+            <SyncedReadingView
+              file={selectedFile}
               text={extractedText}
               audioRef={audioRef}
               isPlaying={isAudioPlaying}
