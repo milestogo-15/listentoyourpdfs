@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { Play, Pause, RotateCcw, Volume2 } from "lucide-react";
+import { Play, Pause, RotateCcw, Volume2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AudioPlayerProps {
@@ -130,7 +130,14 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
             <Play className="w-6 h-6 text-primary-foreground ml-1" />
           )}
         </button>
-        <div className="w-12" /> {/* Spacer for symmetry */}
+        <a
+          href={audioUrl}
+          download="voicereader-audio.wav"
+          className="p-3 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
+          aria-label="Download"
+        >
+          <Download className="w-5 h-5 text-foreground" />
+        </a>
       </div>
     </div>
   );
