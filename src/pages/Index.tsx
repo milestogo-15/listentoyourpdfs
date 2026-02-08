@@ -7,7 +7,6 @@ import { SyncedReadingView } from "@/components/SyncedReadingView";
 import { VoiceSelector, VoiceOption, LanguageOption, voices, languages } from "@/components/VoiceSelector";
 import { Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -125,10 +124,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
-        <div className={cn(
-          "mx-auto space-y-8 transition-all duration-300",
-          processingStep === "complete" ? "max-w-5xl" : "max-w-2xl"
-        )}>
+        <div className="max-w-2xl mx-auto space-y-8">
           {/* Hero */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-display font-bold text-foreground mb-4">
@@ -187,10 +183,9 @@ const Index = () => {
             />
           )}
 
-          {/* Side-by-side Reading View */}
-          {audioUrl && processingStep === "complete" && selectedFile && (
+          {/* Synced Reading View */}
+          {audioUrl && processingStep === "complete" && (
             <SyncedReadingView
-              file={selectedFile}
               text={extractedText}
               audioRef={audioRef}
               isPlaying={isAudioPlaying}
