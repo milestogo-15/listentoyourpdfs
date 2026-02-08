@@ -84,8 +84,8 @@ export function VoiceSelector({ selectedVoice, onVoiceChange, disabled }: VoiceS
                 className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium",
                   voice.gender === "female"
-                    ? "bg-pink-100 text-pink-600"
-                    : "bg-blue-100 text-blue-600"
+                    ? "bg-accent/20 text-accent-foreground"
+                    : "bg-secondary text-secondary-foreground"
                 )}
               >
                 {voice.name[0]}
