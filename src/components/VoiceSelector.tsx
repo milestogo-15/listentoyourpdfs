@@ -29,10 +29,10 @@ const languages: LanguageOption[] = [
   { code: "od-IN", name: "Odia", nativeName: "ଓଡ଼ିଆ" },
 ];
 
-// Simplified voice options
+// Valid Sarvam Bulbul v2 speakers: anushka, abhilash, manisha, vidya, arya, karun, hitesh
 const voices: VoiceOption[] = [
   { id: "anushka", name: "Anushka", gender: "female", style: "Female • Warm & Expressive" },
-  { id: "arvind", name: "Arvind", gender: "male", style: "Male • Clear & Professional" },
+  { id: "abhilash", name: "Abhilash", gender: "male", style: "Male • Clear & Professional" },
 ];
 
 interface VoiceSelectorProps {
