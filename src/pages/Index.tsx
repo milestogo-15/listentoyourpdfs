@@ -3,7 +3,7 @@ import { FileUpload } from "@/components/FileUpload";
 import { ProcessingStatus, ProcessingStep } from "@/components/ProcessingStatus";
 import { TextPreview } from "@/components/TextPreview";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { VoiceSelector, VoiceOption, voices } from "@/components/VoiceSelector";
+import { VoiceSelector, VoiceOption, LanguageOption, voices, languages } from "@/components/VoiceSelector";
 import { Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,6 +13,7 @@ const Index = () => {
   const [extractedText, setExtractedText] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<VoiceOption>(voices[0]);
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(languages[0]);
   const [error, setError] = useState("");
 
   const handleFileSelect = async (file: File) => {
@@ -53,7 +54,11 @@ const Index = () => {
       setProcessingStep("generating");
       
       const { data: ttsData, error: ttsError } = await supabase.functions.invoke("text-to-speech", {
-        body: { text: ocrData.text, voice: selectedVoice.id },
+        body: { 
+          text: ocrData.text, 
+          voice: selectedVoice.id,
+          language: selectedLanguage.code
+        },
       });
 
       if (ttsError) throw new Error(ttsError.message || "Failed to generate speech");
@@ -123,7 +128,7 @@ const Index = () => {
               Listen to your PDFs
             </h2>
             <p className="text-lg text-muted-foreground max-w-md mx-auto">
-              Upload any PDF document and convert it to natural-sounding speech in seconds.
+              Upload any PDF and convert it to natural speech in Hindi, Tamil, Bengali, and 8 more Indian languages.
             </p>
           </div>
 
@@ -135,15 +140,14 @@ const Index = () => {
             onClear={handleClear}
           />
 
-          {/* Voice Selection */}
+          {/* Voice & Language Selection */}
           {selectedFile && processingStep === "idle" && (
             <div className="animate-fade-in">
-              <label className="block text-sm font-medium text-foreground mb-3">
-                Choose Voice
-              </label>
               <VoiceSelector
                 selectedVoice={selectedVoice}
                 onVoiceChange={setSelectedVoice}
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={setSelectedLanguage}
                 disabled={isProcessing}
               />
             </div>
@@ -175,7 +179,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t border-border py-6 mt-12">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          Powered by Gemini AI for text extraction and Sarvam AI for voice synthesis
+          Powered by Gemini AI for text extraction and Sarvam Bulbul V3 for voice synthesis
         </div>
       </footer>
     </div>

@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voice = "meera" } = await req.json();
+    const { text, voice = "meera", language = "en-IN" } = await req.json();
 
     if (!text) {
       return new Response(
@@ -25,7 +25,7 @@ serve(async (req) => {
       throw new Error("SARVAM_API_KEY is not configured");
     }
 
-    // Sarvam TTS API - using Bulbul model
+    // Sarvam TTS API - using Bulbul V3 model
     const response = await fetch("https://api.sarvam.ai/text-to-speech", {
       method: "POST",
       headers: {
@@ -34,21 +34,21 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         inputs: [text],
-        target_language_code: "en-IN",
+        target_language_code: language,
         speaker: voice,
         pitch: 0,
         pace: 1.0,
         loudness: 1.5,
         speech_sample_rate: 22050,
         enable_preprocessing: true,
-        model: "bulbul:v1",
+        model: "bulbul:v2",
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Sarvam API error:", response.status, errorText);
-      throw new Error(`Sarvam API error: ${response.status}`);
+      throw new Error(`Sarvam API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
