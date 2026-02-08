@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { FileUpload } from "@/components/FileUpload";
+import { FilePreview } from "@/components/FilePreview";
 import { ProcessingStatus, ProcessingStep } from "@/components/ProcessingStatus";
 import { TextPreview } from "@/components/TextPreview";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { LiveTextDisplay } from "@/components/LiveTextDisplay";
 import { VoiceSelector, VoiceOption, LanguageOption, voices, languages } from "@/components/VoiceSelector";
 import { Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +17,8 @@ const Index = () => {
   const [selectedVoice, setSelectedVoice] = useState<VoiceOption>(voices[0]);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageOption>(languages[0]);
   const [error, setError] = useState("");
+  const [audioRef, setAudioRef] = useState<React.RefObject<HTMLAudioElement> | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
@@ -140,6 +144,11 @@ const Index = () => {
             onClear={handleClear}
           />
 
+          {/* File Preview */}
+          {selectedFile && (
+            <FilePreview file={selectedFile} />
+          )}
+
           {/* Voice & Language Selection */}
           {selectedFile && processingStep === "idle" && (
             <div className="animate-fade-in">
@@ -171,7 +180,20 @@ const Index = () => {
 
           {/* Audio Player */}
           {audioUrl && processingStep === "complete" && (
-            <AudioPlayer audioUrl={audioUrl} />
+            <AudioPlayer
+              audioUrl={audioUrl}
+              onAudioRef={setAudioRef}
+              onPlayingChange={setIsAudioPlaying}
+            />
+          )}
+
+          {/* Live Text Display */}
+          {audioUrl && processingStep === "complete" && audioRef && (
+            <LiveTextDisplay
+              text={extractedText}
+              audioRef={audioRef}
+              isPlaying={isAudioPlaying}
+            />
           )}
         </div>
       </main>

@@ -4,13 +4,21 @@ import { cn } from "@/lib/utils";
 
 interface AudioPlayerProps {
   audioUrl: string;
+  onAudioRef?: (ref: React.RefObject<HTMLAudioElement>) => void;
+  onPlayingChange?: (isPlaying: boolean) => void;
 }
 
-export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
+export function AudioPlayer({ audioUrl, onAudioRef, onPlayingChange }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    if (onAudioRef) {
+      onAudioRef(audioRef);
+    }
+  }, [onAudioRef]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -31,6 +39,13 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
     };
   }, [audioUrl]);
 
+  const updatePlayingState = (playing: boolean) => {
+    setIsPlaying(playing);
+    if (onPlayingChange) {
+      onPlayingChange(playing);
+    }
+  };
+
   const togglePlayPause = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -40,7 +55,7 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
     } else {
       audio.play();
     }
-    setIsPlaying(!isPlaying);
+    updatePlayingState(!isPlaying);
   };
 
   const handleRestart = () => {
@@ -48,7 +63,7 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
     if (!audio) return;
     audio.currentTime = 0;
     audio.play();
-    setIsPlaying(true);
+    updatePlayingState(true);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
