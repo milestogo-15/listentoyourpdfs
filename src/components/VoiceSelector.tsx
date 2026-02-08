@@ -29,54 +29,10 @@ const languages: LanguageOption[] = [
   { code: "od-IN", name: "Odia", nativeName: "ଓଡ଼ିଆ" },
 ];
 
-// Valid Sarvam Bulbul voices
+// Simplified voice options
 const voices: VoiceOption[] = [
-  { id: "anushka", name: "Anushka", gender: "female", style: "Warm • Expressive" },
-  { id: "priya", name: "Priya", gender: "female", style: "Friendly • Conversational" },
-  { id: "manisha", name: "Manisha", gender: "female", style: "Clear • Professional" },
-  { id: "vidya", name: "Vidya", gender: "female", style: "Natural • Calm" },
-  { id: "neha", name: "Neha", gender: "female", style: "Warm • Natural" },
-  { id: "pooja", name: "Pooja", gender: "female", style: "Soft • Soothing" },
-  { id: "simran", name: "Simran", gender: "female", style: "Young • Energetic" },
-  { id: "kavya", name: "Kavya", gender: "female", style: "Elegant • Clear" },
-  { id: "ishita", name: "Ishita", gender: "female", style: "Bright • Cheerful" },
-  { id: "shreya", name: "Shreya", gender: "female", style: "Melodic • Calm" },
-  { id: "ritu", name: "Ritu", gender: "female", style: "Confident • Clear" },
-  { id: "roopa", name: "Roopa", gender: "female", style: "Clear • Professional" },
-  { id: "arya", name: "Arya", gender: "female", style: "Modern • Articulate" },
-  { id: "amelia", name: "Amelia", gender: "female", style: "Smooth • Professional" },
-  { id: "sophia", name: "Sophia", gender: "female", style: "Warm • Elegant" },
-  { id: "tanya", name: "Tanya", gender: "female", style: "Vibrant • Clear" },
-  { id: "shruti", name: "Shruti", gender: "female", style: "Gentle • Natural" },
-  { id: "suhani", name: "Suhani", gender: "female", style: "Sweet • Friendly" },
-  { id: "kavitha", name: "Kavitha", gender: "female", style: "Mature • Warm" },
-  { id: "rupali", name: "Rupali", gender: "female", style: "Clear • Expressive" },
-  { id: "abhilash", name: "Abhilash", gender: "male", style: "Warm • Mature" },
-  { id: "aditya", name: "Aditya", gender: "male", style: "Deep • Authoritative" },
-  { id: "rahul", name: "Rahul", gender: "male", style: "Friendly • Casual" },
-  { id: "rohan", name: "Rohan", gender: "male", style: "Clear • Confident" },
-  { id: "amit", name: "Amit", gender: "male", style: "Professional • Steady" },
-  { id: "dev", name: "Dev", gender: "male", style: "Young • Dynamic" },
-  { id: "varun", name: "Varun", gender: "male", style: "Natural • Conversational" },
-  { id: "manan", name: "Manan", gender: "male", style: "Warm • Relatable" },
-  { id: "sumit", name: "Sumit", gender: "male", style: "Clear • Articulate" },
-  { id: "kabir", name: "Kabir", gender: "male", style: "Calm • Thoughtful" },
-  { id: "karun", name: "Karun", gender: "male", style: "Confident • Warm" },
-  { id: "hitesh", name: "Hitesh", gender: "male", style: "Mature • Professional" },
-  { id: "ratan", name: "Ratan", gender: "male", style: "Mature • Authoritative" },
-  { id: "advait", name: "Advait", gender: "male", style: "Modern • Clear" },
-  { id: "anand", name: "Anand", gender: "male", style: "Warm • Thoughtful" },
-  { id: "tarun", name: "Tarun", gender: "male", style: "Clear • Energetic" },
-  { id: "sunny", name: "Sunny", gender: "male", style: "Bright • Friendly" },
-  { id: "mani", name: "Mani", gender: "male", style: "Natural • Calm" },
-  { id: "gokul", name: "Gokul", gender: "male", style: "Warm • Traditional" },
-  { id: "vijay", name: "Vijay", gender: "male", style: "Strong • Clear" },
-  { id: "mohit", name: "Mohit", gender: "male", style: "Friendly • Natural" },
-  { id: "rehan", name: "Rehan", gender: "male", style: "Modern • Smooth" },
-  { id: "soham", name: "Soham", gender: "male", style: "Calm • Articulate" },
-  { id: "aayan", name: "Aayan", gender: "male", style: "Young • Fresh" },
-  { id: "shubh", name: "Shubh", gender: "male", style: "Cheerful • Clear" },
-  { id: "ashutosh", name: "Ashutosh", gender: "male", style: "Deep • Mature" },
+  { id: "anushka", name: "Anushka", gender: "female", style: "Female • Warm & Expressive" },
+  { id: "arvind", name: "Arvind", gender: "male", style: "Male • Clear & Professional" },
 ];
 
 interface VoiceSelectorProps {
@@ -113,8 +69,6 @@ export function VoiceSelector({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const femaleVoices = voices.filter(v => v.gender === "female");
-  const maleVoices = voices.filter(v => v.gender === "male");
 
   return (
     <div className="space-y-4">
@@ -202,14 +156,8 @@ export function VoiceSelector({
         </button>
 
         {isVoiceOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 rounded-xl bg-card border border-border shadow-lg z-20 animate-fade-in max-h-80 overflow-y-auto">
-            {/* Female voices */}
-            <div className="px-4 py-2 bg-secondary/50 border-b border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Female Voices
-              </p>
-            </div>
-            {femaleVoices.map((voice) => (
+          <div className="absolute top-full left-0 right-0 mt-2 rounded-xl bg-card border border-border shadow-lg z-20 animate-fade-in">
+            {voices.map((voice) => (
               <button
                 key={voice.id}
                 onClick={() => {
@@ -217,43 +165,16 @@ export function VoiceSelector({
                   setIsVoiceOpen(false);
                 }}
                 className={cn(
-                  "flex items-center gap-3 w-full px-4 py-3 transition-colors",
+                  "flex items-center gap-3 w-full px-4 py-3 transition-colors first:rounded-t-xl last:rounded-b-xl",
                   voice.id === selectedVoice.id
                     ? "bg-primary/10"
                     : "hover:bg-secondary"
                 )}
               >
-                <div className="w-8 h-8 rounded-full bg-accent/20 text-accent-foreground flex items-center justify-center text-xs font-medium">
-                  {voice.name[0]}
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="font-medium text-foreground">{voice.name}</p>
-                  <p className="text-xs text-muted-foreground">{voice.style}</p>
-                </div>
-              </button>
-            ))}
-
-            {/* Male voices */}
-            <div className="px-4 py-2 bg-secondary/50 border-b border-border border-t">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Male Voices
-              </p>
-            </div>
-            {maleVoices.map((voice) => (
-              <button
-                key={voice.id}
-                onClick={() => {
-                  onVoiceChange(voice);
-                  setIsVoiceOpen(false);
-                }}
-                className={cn(
-                  "flex items-center gap-3 w-full px-4 py-3 transition-colors",
-                  voice.id === selectedVoice.id
-                    ? "bg-primary/10"
-                    : "hover:bg-secondary"
-                )}
-              >
-                <div className="w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xs font-medium">
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium",
+                  voice.gender === "female" ? "bg-accent/20 text-accent-foreground" : "bg-secondary text-secondary-foreground"
+                )}>
                   {voice.name[0]}
                 </div>
                 <div className="flex-1 text-left">
@@ -268,7 +189,7 @@ export function VoiceSelector({
 
       {/* Model info */}
       <p className="text-xs text-muted-foreground text-center">
-        Powered by Sarvam Bulbul V3 • 25+ voices • 11 Indian languages
+        Powered by Sarvam Bulbul • 11 Indian languages
       </p>
     </div>
   );
