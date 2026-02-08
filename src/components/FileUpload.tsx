@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Upload, FileText, X } from "lucide-react";
+import { Upload, FileText, Image, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FileUploadProps {
@@ -9,8 +9,23 @@ interface FileUploadProps {
   onClear: () => void;
 }
 
+const ACCEPTED_TYPES = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+];
+
+const ACCEPTED_EXTENSIONS = ".pdf,.png,.jpg,.jpeg,.webp,.gif";
+
 export function FileUpload({ onFileSelect, isProcessing, selectedFile, onClear }: FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
+
+  const isValidFile = (file: File) => {
+    return ACCEPTED_TYPES.includes(file.type);
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -29,7 +44,7 @@ export function FileUpload({ onFileSelect, isProcessing, selectedFile, onClear }
       setIsDragOver(false);
 
       const files = e.dataTransfer.files;
-      if (files?.[0]?.type === "application/pdf") {
+      if (files?.[0] && isValidFile(files[0])) {
         onFileSelect(files[0]);
       }
     },
@@ -46,19 +61,29 @@ export function FileUpload({ onFileSelect, isProcessing, selectedFile, onClear }
     [onFileSelect]
   );
 
+  const isImage = selectedFile?.type.startsWith("image/");
+  const isPdf = selectedFile?.type === "application/pdf";
+
   if (selectedFile) {
     return (
       <div className="relative w-full p-6 rounded-xl bg-card shadow-soft border border-border animate-fade-in">
         <div className="flex items-center gap-4">
-          <div className="flex-shrink-0 w-14 h-14 rounded-lg gradient-primary flex items-center justify-center">
-            <FileText className="w-7 h-7 text-primary-foreground" />
+          <div className={cn(
+            "flex-shrink-0 w-14 h-14 rounded-lg flex items-center justify-center",
+            isPdf ? "gradient-primary" : "bg-accent"
+          )}>
+            {isPdf ? (
+              <FileText className="w-7 h-7 text-primary-foreground" />
+            ) : (
+              <Image className="w-7 h-7 text-accent-foreground" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-lg font-medium text-foreground truncate">
               {selectedFile.name}
             </p>
             <p className="text-sm text-muted-foreground">
-              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {isImage ? "Image" : "PDF"}
             </p>
           </div>
           {!isProcessing && (
@@ -90,7 +115,7 @@ export function FileUpload({ onFileSelect, isProcessing, selectedFile, onClear }
     >
       <input
         type="file"
-        accept=".pdf,application/pdf"
+        accept={ACCEPTED_EXTENSIONS}
         onChange={handleFileInput}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         disabled={isProcessing}
@@ -112,11 +137,20 @@ export function FileUpload({ onFileSelect, isProcessing, selectedFile, onClear }
           />
         </div>
         <h3 className="text-xl font-semibold text-foreground mb-2">
-          Drop your PDF here
+          Drop your file here
         </h3>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-2">
           or click to browse from your computer
         </p>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <FileText className="w-4 h-4" /> PDF
+          </span>
+          <span className="text-border">•</span>
+          <span className="flex items-center gap-1">
+            <Image className="w-4 h-4" /> PNG, JPG, WebP
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -42,7 +42,7 @@ const Index = () => {
       const base64 = await fileToBase64(selectedFile);
       
       const { data: ocrData, error: ocrError } = await supabase.functions.invoke("pdf-ocr", {
-        body: { pdfBase64: base64 },
+        body: { pdfBase64: base64, mimeType: selectedFile.type },
       });
 
       if (ocrError) throw new Error(ocrError.message || "Failed to extract text");

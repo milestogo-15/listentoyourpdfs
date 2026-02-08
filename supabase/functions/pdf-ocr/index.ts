@@ -11,11 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { pdfBase64 } = await req.json();
+    const { pdfBase64, mimeType = "application/pdf" } = await req.json();
 
     if (!pdfBase64) {
       return new Response(
-        JSON.stringify({ error: "No PDF data provided" }),
+        JSON.stringify({ error: "No file data provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -25,7 +25,13 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Use Gemini for PDF text extraction via Lovable AI Gateway
+    // Determine the correct MIME type for the image_url
+    const isImage = mimeType.startsWith("image/");
+    const dataUrl = isImage 
+      ? `data:${mimeType};base64,${pdfBase64}`
+      : `data:application/pdf;base64,${pdfBase64}`;
+
+    // Use Gemini for text extraction via Lovable AI Gateway
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -40,12 +46,12 @@ serve(async (req) => {
             content: [
               {
                 type: "text",
-                text: "Extract all text from this PDF accurately, preserving the reading order. Do not add any commentary, explanations, or formatting - just return the raw text content exactly as it appears in the document."
+                text: "Extract all text from this document or image accurately, preserving the reading order. Do not add any commentary, explanations, or formatting - just return the raw text content exactly as it appears."
               },
               {
                 type: "image_url",
                 image_url: {
-                  url: `data:application/pdf;base64,${pdfBase64}`
+                  url: dataUrl
                 }
               }
             ]
@@ -76,7 +82,7 @@ serve(async (req) => {
     const extractedText = data.choices?.[0]?.message?.content;
 
     if (!extractedText) {
-      throw new Error("No text extracted from PDF");
+      throw new Error("No text extracted from document");
     }
 
     return new Response(
@@ -84,7 +90,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("PDF OCR error:", error);
+    console.error("OCR error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
