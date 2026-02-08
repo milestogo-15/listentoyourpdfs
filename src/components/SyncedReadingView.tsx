@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { FileText } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 
 interface SyncedReadingViewProps {
   file: File;
@@ -104,12 +104,23 @@ export function SyncedReadingView({ file, text, audioRef, isPlaying }: SyncedRea
         <div className="flex flex-col">
           <div className="px-4 py-3 border-b border-border bg-secondary/30 flex items-center justify-between">
             <p className="text-sm font-medium text-foreground">Extracted Text</p>
-            {isPlaying && (
-              <span className="flex items-center gap-2 text-sm text-primary">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                Reading...
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {isPlaying && (
+                <span className="flex items-center gap-2 text-sm text-primary">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  Reading...
+                </span>
+              )}
+              <a
+                href={`data:text/plain;charset=utf-8,${encodeURIComponent(text)}`}
+                download="extracted-text.txt"
+                className="p-1.5 rounded-md hover:bg-secondary transition-colors"
+                aria-label="Download text"
+                title="Download text"
+              >
+                <Download className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+              </a>
+            </div>
           </div>
           <div 
             ref={textContainerRef}
