@@ -35,14 +35,14 @@ serve(async (req) => {
 
     // Step 1: Create a Document Intelligence job
     console.log("Creating Document Intelligence job...");
-    const createJobResponse = await fetch("https://api.sarvam.ai/document-intelligence/jobs", {
+    const createJobResponse = await fetch("https://api.sarvam.ai/v1/document-intelligence/jobs", {
       method: "POST",
       headers: {
         "api-subscription-key": SARVAM_API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        language: language,
+        language_code: language,
         output_format: "md", // Markdown for cleaner text extraction
       }),
     });
@@ -50,13 +50,17 @@ serve(async (req) => {
     if (!createJobResponse.ok) {
       const errorText = await createJobResponse.text();
       console.error("Failed to create job:", createJobResponse.status, errorText);
-      throw new Error(`Failed to create job: ${createJobResponse.status}`);
+      throw new Error(`Failed to create job: ${createJobResponse.status} - ${errorText}`);
     }
 
     const jobData = await createJobResponse.json();
     const jobId = jobData.job_id;
     const uploadUrl = jobData.upload_url;
     console.log("Job created:", jobId);
+
+    if (!uploadUrl) {
+      throw new Error("No upload URL returned from job creation");
+    }
 
     // Step 2: Upload the file to the pre-signed URL
     console.log("Uploading file...");
@@ -93,7 +97,7 @@ serve(async (req) => {
 
     // Step 3: Start the job
     console.log("Starting job...");
-    const startJobResponse = await fetch(`https://api.sarvam.ai/document-intelligence/jobs/${jobId}/start`, {
+    const startJobResponse = await fetch(`https://api.sarvam.ai/v1/document-intelligence/jobs/${jobId}/start`, {
       method: "POST",
       headers: {
         "api-subscription-key": SARVAM_API_KEY,
@@ -113,11 +117,11 @@ serve(async (req) => {
     let pollAttempts = 0;
     let statusData: { job_state?: string; download_url?: string } = {};
 
-    while (jobStatus === "processing" && pollAttempts < MAX_POLL_ATTEMPTS) {
+    while ((jobStatus === "processing" || jobStatus === "pending" || jobStatus === "started") && pollAttempts < MAX_POLL_ATTEMPTS) {
       await sleep(POLL_INTERVAL_MS);
       pollAttempts++;
 
-      const statusResponse = await fetch(`https://api.sarvam.ai/document-intelligence/jobs/${jobId}/status`, {
+      const statusResponse = await fetch(`https://api.sarvam.ai/v1/document-intelligence/jobs/${jobId}/status`, {
         method: "GET",
         headers: {
           "api-subscription-key": SARVAM_API_KEY,
@@ -134,14 +138,14 @@ serve(async (req) => {
       jobStatus = statusData.job_state || "unknown";
       console.log(`Poll attempt ${pollAttempts}: status = ${jobStatus}`);
 
-      if (jobStatus === "completed") {
+      if (jobStatus === "completed" || jobStatus === "succeeded") {
         break;
       } else if (jobStatus === "failed" || jobStatus === "error") {
         throw new Error("Document processing failed");
       }
     }
 
-    if (jobStatus !== "completed") {
+    if (jobStatus !== "completed" && jobStatus !== "succeeded") {
       throw new Error("Job timed out or failed to complete");
     }
 
@@ -169,7 +173,7 @@ serve(async (req) => {
       throw new Error("No text extracted from document");
     }
 
-    console.log("Text extraction complete");
+    console.log("Text extraction complete, length:", extractedText.length);
     return new Response(
       JSON.stringify({ text: extractedText }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -227,25 +231,93 @@ async function extractTextFromZip(zipData: Uint8Array): Promise<string> {
     // Calculate data offset
     const dataOffset = offset + 30 + fileNameLength + extraFieldLength;
     
-    // Check if it's a markdown file and not compressed (method 0 = stored)
-    if ((fileName.endsWith(".md") || fileName.endsWith(".txt")) && compressionMethod === 0) {
+    // Check if it's a markdown or text file and not compressed (method 0 = stored)
+    if ((fileName.endsWith(".md") || fileName.endsWith(".txt") || fileName.endsWith(".html")) && compressionMethod === 0) {
       const fileData = zipData.slice(dataOffset, dataOffset + uncompressedSize);
       const text = decoder.decode(fileData);
       textParts.push(text);
+    } else if ((fileName.endsWith(".md") || fileName.endsWith(".txt") || fileName.endsWith(".html")) && compressionMethod === 8) {
+      // DEFLATE compression - we need to decompress
+      // For now, try to read as-is and log that we found a compressed file
+      console.log(`Found compressed file: ${fileName}, compression method: ${compressionMethod}`);
+      // We'll handle this in a simple way - try to decompress using DecompressionStream
+      try {
+        const compressedData = zipData.slice(dataOffset, dataOffset + compressedSize);
+        const decompressed = await decompressDeflate(compressedData);
+        const text = decoder.decode(decompressed);
+        textParts.push(text);
+      } catch (e) {
+        console.error("Failed to decompress file:", fileName, e);
+      }
     }
     
     // Move to next file
-    // Handle data descriptor if present (bit 3 of general purpose flag)
-    let dataSize = compressedSize;
-    if (generalPurpose & 0x08) {
-      // Data descriptor follows the compressed data
-      // We need to skip 12 or 16 bytes after compressed data
-      // This is tricky without proper parsing, so we'll try to find next signature
-    }
-    
+    const dataSize = compressedSize > 0 ? compressedSize : uncompressedSize;
     offset = dataOffset + dataSize;
+    
+    // Handle data descriptor if present (bit 3 of general purpose flag)
+    if (generalPurpose & 0x08) {
+      // Skip data descriptor (12 or 16 bytes)
+      offset += 12;
+    }
   }
   
   // Combine all extracted text
-  return textParts.join("\n\n").trim();
+  const combined = textParts.join("\n\n").trim();
+  
+  // If we got markdown, strip common markdown syntax for cleaner text
+  return stripMarkdown(combined);
+}
+
+// Simple DEFLATE decompression using Web Streams API
+async function decompressDeflate(data: Uint8Array): Promise<Uint8Array> {
+  // Add zlib header for raw deflate (not ideal but worth trying)
+  const stream = new DecompressionStream("deflate-raw");
+  const writer = stream.writable.getWriter();
+  writer.write(data);
+  writer.close();
+  
+  const reader = stream.readable.getReader();
+  const chunks: Uint8Array[] = [];
+  
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  
+  // Concatenate all chunks
+  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  
+  return result;
+}
+
+// Strip basic markdown formatting for cleaner text
+function stripMarkdown(text: string): string {
+  return text
+    // Remove headers
+    .replace(/^#{1,6}\s+/gm, "")
+    // Remove bold/italic
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/_([^_]+)_/g, "$1")
+    // Remove links but keep text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    // Remove images
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "")
+    // Remove horizontal rules
+    .replace(/^[-*_]{3,}$/gm, "")
+    // Remove code blocks
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`([^`]+)`/g, "$1")
+    // Clean up extra whitespace
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
