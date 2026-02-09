@@ -35,14 +35,14 @@ serve(async (req) => {
 
     // Step 1: Create a Document Intelligence job
     console.log("Creating Document Intelligence job...");
-    const createJobResponse = await fetch("https://api.sarvam.ai/v1/document-intelligence/jobs", {
+    const createJobResponse = await fetch("https://api.sarvam.ai/document-intelligence/jobs", {
       method: "POST",
       headers: {
         "api-subscription-key": SARVAM_API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        language_code: language,
+        language: language,
         output_format: "md", // Markdown for cleaner text extraction
       }),
     });
@@ -97,7 +97,7 @@ serve(async (req) => {
 
     // Step 3: Start the job
     console.log("Starting job...");
-    const startJobResponse = await fetch(`https://api.sarvam.ai/v1/document-intelligence/jobs/${jobId}/start`, {
+    const startJobResponse = await fetch(`https://api.sarvam.ai/document-intelligence/jobs/${jobId}/start`, {
       method: "POST",
       headers: {
         "api-subscription-key": SARVAM_API_KEY,
@@ -121,7 +121,7 @@ serve(async (req) => {
       await sleep(POLL_INTERVAL_MS);
       pollAttempts++;
 
-      const statusResponse = await fetch(`https://api.sarvam.ai/v1/document-intelligence/jobs/${jobId}/status`, {
+      const statusResponse = await fetch(`https://api.sarvam.ai/document-intelligence/jobs/${jobId}/status`, {
         method: "GET",
         headers: {
           "api-subscription-key": SARVAM_API_KEY,
